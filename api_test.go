@@ -1,15 +1,55 @@
-package main
+package main_test
 
 import (
+	"github.com/jmagrippis/passwordApi"
+
+	"github.com/julienschmidt/httprouter"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"encoding/json"
+	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestGenerator(t *testing.T) {
 
-	Convey("Given I visit \"/generate/:amount\"", t, func() {
+	Convey("Given I visit \"/generate/5\"", t, func() {
 
-		Convey("It returns a json array of :amount passwords", nil)
+		req, err := http.NewRequest("GET", "/generate/5", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "5"}}
+
+		Convey("It returns a json array of 5 passwords", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 5)
+		})
+
+	})
+
+	Convey("Given I visit \"/generate/12\"", t, func() {
+
+		req, err := http.NewRequest("GET", "/generate/12", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "12"}}
+
+		Convey("It returns a json array of 12 passwords", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 12)
+		})
 
 	})
 
