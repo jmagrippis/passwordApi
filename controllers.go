@@ -53,6 +53,11 @@ func Generate(w http.ResponseWriter, r *http.Request, params httprouter.Params) 
 
 	passwords := make([]string, amount)
 
+	delimiter := r.URL.Query().Get("delimiter")
+	if delimiter != "" {
+		generator.SetDelimiter(delimiter)
+	}
+
 	for i := 0; i < amount; i++ {
 		passwords[i] = generator.Generate()
 	}

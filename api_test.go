@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -53,9 +54,43 @@ func TestGenerator(t *testing.T) {
 
 	})
 
-	Convey("Given I visit \"/generate/1?delimiter=x", t, func() {
+	Convey("Given I visit \"/generate/1?delimiter=^", t, func() {
 
-		Convey("I get a json array of one password delimited by \"x\"", nil)
+		req, err := http.NewRequest("GET", "/generate/1?delimiter=^", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "1"}}
+
+		Convey("I get a json array of one password delimited by \"^\"", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 1)
+			So(len(strings.Split(response[0], "^")), ShouldEqual, 5)
+		})
+
+	})
+
+	Convey("Given I visit \"/generate/1?delimiter=%2F-%2F", t, func() {
+
+		req, err := http.NewRequest("GET", "/generate/1?delimiter=%2F-%2F", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "1"}}
+
+		Convey("I get a json array of one password delimited by \"/-/\"", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 1)
+			So(len(strings.Split(response[0], "/-/")), ShouldEqual, 5)
+		})
 
 	})
 
