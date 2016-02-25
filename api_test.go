@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestGenerator(t *testing.T) {
@@ -94,9 +95,52 @@ func TestGenerator(t *testing.T) {
 
 	})
 
-	Convey("Given I visit \"/generate/1?prefix=x", t, func() {
+	Convey("Given I visit \"/generate/1?prefix=^", t, func() {
 
-		Convey("I get a json array of one password prefixed by \"x\"", nil)
+		req, err := http.NewRequest("GET", "/generate/1?prefix=^", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "1"}}
+
+		Convey("I get a json array of one password prefixed by \"^\"", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 1)
+			first, _ := utf8.DecodeRuneInString(response[0])
+			So(string(first), ShouldEqual, "^")
+		})
+
+	})
+
+	Convey("Given I visit \"/generate/1?prefix=%2F-%2F", t, func() {
+
+		req, err := http.NewRequest("GET", "/generate/1?prefix=%2F-%2F", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "1"}}
+
+		Convey("I get a json array of one password prefixed by \"/-/\"", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 1)
+			prefixCharacterCount := 3
+			var startingCharacters = make([]string, prefixCharacterCount)
+			for i, character := range response[0] {
+				startingCharacters[i] = string(character)
+				if i == prefixCharacterCount-1 {
+					break
+				}
+			}
+			So(strings.Join(startingCharacters, ""), ShouldEqual, "/-/")
+		})
 
 	})
 
