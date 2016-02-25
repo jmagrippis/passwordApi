@@ -144,9 +144,46 @@ func TestGenerator(t *testing.T) {
 
 	})
 
-	Convey("Given I visit \"/generate/1?suffix=x", t, func() {
+	Convey("Given I visit \"/generate/1?suffix=^", t, func() {
 
-		Convey("I get a json array of one password suffixed by \"x\"", nil)
+		req, err := http.NewRequest("GET", "/generate/1?suffix=^", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "1"}}
+
+		Convey("I get a json array of one password suffixed by \"^\"", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 1)
+			last, _ := utf8.DecodeLastRuneInString(response[0])
+			So(string(last), ShouldEqual, "^")
+		})
+
+	})
+
+	Convey("Given I visit \"/generate/1?suffix=%2F-%2F", t, func() {
+
+		req, err := http.NewRequest("GET", "/generate/1?suffix=%2F-%2F", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		params := httprouter.Params{httprouter.Param{Key: "amount", Value: "1"}}
+
+		Convey("I get a json array of one password suffixed by \"/-/\"", func() {
+			main.Generate(w, req, params)
+			So(w.Code, ShouldEqual, 200)
+			var response []string
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			So(len(response), ShouldEqual, 1)
+			suffixCharacterCount := 3
+			var endingCharacters = string(response[0][len(response[0])-suffixCharacterCount:])
+			So(endingCharacters, ShouldEqual, "/-/")
+		})
 
 	})
 
